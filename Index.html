@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klockan</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        .clock-container {
+            background: rgb(241, 193, 255);
+            padding: 2vh;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            width: 95vw;
+            max-width: 95vw;
+            height: 95vh;
+            max-height: 95vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly;
+            align-items: center;
+        }
+
+        .digital-time {
+            font-size: clamp(32px, 8vw, 80px);
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .analog-clock {
+            width: min(60vw, 60vh);
+            height: min(60vw, 60vh);
+            max-width: 600px;
+            max-height: 600px;
+            border: clamp(6px, 1vw, 12px) solid #333;
+            border-radius: 50%;
+            position: relative;
+            margin: 0;
+            background: rgb(242, 139, 255);
+            cursor: pointer;
+            touch-action: none;
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        .analog-clock::before {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: #333;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+
+        .number {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            font-size: clamp(16px, 3vw, 32px);
+            font-weight: bold;
+            color: #333;
+        }
+
+        .number span {
+            display: inline-block;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .number:nth-child(1) { transform: rotate(0deg); }
+        .number:nth-child(1) span { top: 10px; transform: translateX(-50%) rotate(0deg); }
+        
+        .number:nth-child(2) { transform: rotate(30deg); }
+        .number:nth-child(2) span { top: 10px; transform: translateX(-50%) rotate(-30deg); }
+        
+        .number:nth-child(3) { transform: rotate(60deg); }
+        .number:nth-child(3) span { top: 10px; transform: translateX(-50%) rotate(-60deg); }
+        
+        .number:nth-child(4) { transform: rotate(90deg); }
+        .number:nth-child(4) span { top: 10px; transform: translateX(-50%) rotate(-90deg); }
+        
+        .number:nth-child(5) { transform: rotate(120deg); }
+        .number:nth-child(5) span { top: 10px; transform: translateX(-50%) rotate(-120deg); }
+        
+        .number:nth-child(6) { transform: rotate(150deg); }
+        .number:nth-child(6) span { top: 10px; transform: translateX(-50%) rotate(-150deg); }
+        
+        .number:nth-child(7) { transform: rotate(180deg); }
+        .number:nth-child(7) span { top: 10px; transform: translateX(-50%) rotate(-180deg); }
+        
+        .number:nth-child(8) { transform: rotate(210deg); }
+        .number:nth-child(8) span { top: 10px; transform: translateX(-50%) rotate(-210deg); }
+        
+        .number:nth-child(9) { transform: rotate(240deg); }
+        .number:nth-child(9) span { top: 10px; transform: translateX(-50%) rotate(-240deg); }
+        
+        .number:nth-child(10) { transform: rotate(270deg); }
+        .number:nth-child(10) span { top: 10px; transform: translateX(-50%) rotate(-270deg); }
+        
+        .number:nth-child(11) { transform: rotate(300deg); }
+        .number:nth-child(11) span { top: 10px; transform: translateX(-50%) rotate(-300deg); }
+        
+        .number:nth-child(12) { transform: rotate(330deg); }
+        .number:nth-child(12) span { top: 10px; transform: translateX(-50%) rotate(-330deg); }
+
+        .hand {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom center;
+            background: #333;
+            border-radius: 10px;
+        }
+
+        .hour-hand {
+            width: clamp(4px, 0.8vw, 10px);
+            height: 25%;
+            margin-left: calc(clamp(4px, 0.8vw, 10px) / -2);
+            background: #333;
+            z-index: 3;
+        }
+
+        .minute-hand {
+            width: clamp(3px, 0.6vw, 8px);
+            height: 38%;
+            margin-left: calc(clamp(3px, 0.6vw, 8px) / -2);
+            background: #666;
+            z-index: 2;
+        }
+
+        .text-time {
+            font-size: clamp(20px, 5vw, 48px);
+            color: #333;
+            line-height: 1.5;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mode-indicator {
+            margin: 0;
+            font-size: clamp(12px, 2vw, 18px);
+            color: #666;
+            font-style: italic;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .mode-indicator:hover {
+            color: #333;
+            text-decoration: underline;
+        }
+
+        .mode-button {
+            margin: 0;
+            padding: clamp(8px, 1.5vw, 15px) clamp(16px, 3vw, 30px);
+            font-size: clamp(14px, 2.5vw, 20px);
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .mode-button:hover {
+            background: #5568d3;
+        }
+
+        .mode-button:active {
+            background: #4451b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="clock-container">
+        <div class="digital-time" id="digitalTime">00:00</div>
+        
+        <div class="analog-clock" id="analogClock">
+            <div class="number"><span>12</span></div>
+            <div class="number"><span>1</span></div>
+            <div class="number"><span>2</span></div>
+            <div class="number"><span>3</span></div>
+            <div class="number"><span>4</span></div>
+            <div class="number"><span>5</span></div>
+            <div class="number"><span>6</span></div>
+            <div class="number"><span>7</span></div>
+            <div class="number"><span>8</span></div>
+            <div class="number"><span>9</span></div>
+            <div class="number"><span>10</span></div>
+            <div class="number"><span>11</span></div>
+            <div class="hand hour-hand" id="hourHand"></div>
+            <div class="hand minute-hand" id="minuteHand"></div>
+        </div>
+
+        <div class="text-time" id="textTime">tolv noll noll</div>
+        <div class="mode-indicator" id="modeIndicator" onclick="toggleMode()">Exakt tid</div>
+        <button class="mode-button" id="modeButton" onclick="toggleClockMode()">Byt till manuellt läge</button>
+    </div>
+
+    <script>
+        let roundToFive = false;
+        let manualMode = false;
+        let manualHours = 0;
+        let manualMinutes = 0;
+        let draggingHand = null;
+
+        function toggleMode() {
+            roundToFive = !roundToFive;
+            document.getElementById('modeIndicator').textContent = 
+                roundToFive ? 'Avrundad till närmaste 5 minuter' : 'Exakt tid';
+            if (!manualMode) {
+                updateClock();
+            } else {
+                updateManualClock();
+            }
+        }
+
+        function toggleClockMode() {
+            manualMode = !manualMode;
+            const button = document.getElementById('modeButton');
+            
+            if (manualMode) {
+                button.textContent = 'Byt till riktig klocka';
+                // Sätt manuell tid till nuvarande tid
+                const now = new Date();
+                manualHours = now.getHours();
+                manualMinutes = now.getMinutes();
+                updateManualClock();
+            } else {
+                button.textContent = 'Byt till manuellt läge';
+                updateClock();
+            }
+        }
+
+        function getAngleFromEvent(event, clockElement) {
+            const rect = clockElement.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            let clientX, clientY;
+            if (event.type.startsWith('touch')) {
+                clientX = event.touches[0]?.clientX || event.changedTouches[0].clientX;
+                clientY = event.touches[0]?.clientY || event.changedTouches[0].clientY;
+            } else {
+                clientX = event.clientX;
+                clientY = event.clientY;
+            }
+            
+            const deltaX = clientX - centerX;
+            const deltaY = clientY - centerY;
+            
+            let angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+            angle = (angle + 90 + 360) % 360;
+            
+            return angle;
+        }
+
+        function updateManualTime(event) {
+            if (!manualMode || draggingHand === null) return;
+            
+            const clockElement = document.getElementById('analogClock');
+            const angle = getAngleFromEvent(event, clockElement);
+            
+            if (draggingHand === 'minute') {
+                manualMinutes = Math.round(angle / 6);
+                if (manualMinutes === 60) manualMinutes = 0;
+            } else if (draggingHand === 'hour') {
+                const hourValue = angle / 30;
+                manualHours = Math.floor(hourValue) % 12;
+                if (manualHours === 0) manualHours = 0;
+            }
+            
+            updateManualClock();
+        }
+
+        function startDrag(event, hand) {
+            if (!manualMode) return;
+            event.preventDefault();
+            draggingHand = hand;
+            
+            if (event.type === 'mousedown') {
+                document.addEventListener('mousemove', updateManualTime);
+                document.addEventListener('mouseup', stopDrag);
+            }
+        }
+
+        function stopDrag() {
+            draggingHand = null;
+            document.removeEventListener('mousemove', updateManualTime);
+            document.removeEventListener('mouseup', stopDrag);
+        }
+
+        // Touch event handlers
+        const analogClock = document.getElementById('analogClock');
+        
+        analogClock.addEventListener('touchstart', function(event) {
+            if (!manualMode) return;
+            event.preventDefault();
+            
+            const rect = analogClock.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const touchX = event.touches[0].clientX;
+            const touchY = event.touches[0].clientY;
+            
+            const distance = Math.sqrt(Math.pow(touchX - centerX, 2) + Math.pow(touchY - centerY, 2));
+            
+            // Bestäm vilken visare baserat på avstånd från centrum
+            if (distance < 80) {
+                draggingHand = 'hour';
+            } else {
+                draggingHand = 'minute';
+            }
+            
+            updateManualTime(event);
+        });
+        
+        analogClock.addEventListener('touchmove', updateManualTime);
+        analogClock.addEventListener('touchend', stopDrag);
+        
+        // Mouse events för desktop
+        document.getElementById('hourHand').addEventListener('mousedown', (e) => startDrag(e, 'hour'));
+        document.getElementById('minuteHand').addEventListener('mousedown', (e) => startDrag(e, 'minute'));
+
+        function numberToSwedish(num) {
+            const numbers = [
+                'noll', 'en', 'två', 'tre', 'fyra', 'fem', 'sex', 'sju', 'åtta', 'nio',
+                'tio', 'elva', 'tolv', 'tretton', 'fjorton', 'femton', 'sexton',
+                'sjutton', 'arton', 'nitton', 'tjugo', 'tjugoett', 'tjugotvå',
+                'tjugotre', 'tjugofyra', 'tjugofem', 'tjugosex', 'tjugosju',
+                'tjugoåtta', 'tjugonio', 'trettio', 'trettioett', 'trettiotvå',
+                'trettiotre', 'trettiofyra', 'trettiofem', 'trettiosex', 'trettiosju',
+                'trettioåtta', 'trettionio', 'fyrtio', 'fyrtioett', 'fyrtiotvå',
+                'fyrtiotre', 'fyrtiofyra', 'fyrtiofem', 'fyrtiosex', 'fyrtiosju',
+                'fyrtioåtta', 'fyrtionio', 'femtio', 'femtioett', 'femtiotvå',
+                'femtiotre', 'femtiofyra', 'femtiofem', 'femtiosex', 'femtiosju',
+                'femtioåtta', 'femtionio'
+            ];
+            return numbers[num] || num.toString();
+        }
+
+        function getTimeInWords(hours, minutes) {
+            const hourNames = [
+                'tolv', 'ett', 'två', 'tre', 'fyra', 'fem', 'sex', 'sju', 'åtta', 'nio',
+                'tio', 'elva', 'tolv', 'ett', 'två', 'tre', 'fyra', 'fem', 'sex', 'sju',
+                'åtta', 'nio', 'tio', 'elva'
+            ];
+            
+            const minuteNames = {
+                1: 'en', 2: 'två', 3: 'tre', 4: 'fyra', 5: 'fem',
+                6: 'sex', 7: 'sju', 8: 'åtta', 9: 'nio', 10: 'tio',
+                11: 'elva', 12: 'tolv', 13: 'tretton', 14: 'fjorton',
+                15: 'kvart', 16: 'sexton', 17: 'sjutton', 18: 'arton',
+                19: 'nitton', 20: 'tjugo', 21: 'tjugoett', 22: 'tjugotvå',
+                23: 'tjugotre', 24: 'tjugofyra', 25: 'tjugofem',
+                26: 'tjugosex', 27: 'tjugosju', 28: 'tjugoåtta', 29: 'tjugonio'
+            };
+
+            const currentHour = hourNames[hours % 12];
+            const nextHour = hourNames[(hours + 1) % 24];
+
+            if (minutes === 0) {
+                return `Klockan ${currentHour}`;
+            } else if (minutes === 15) {
+                return `Kvart över ${currentHour}`;
+            } else if (minutes === 30) {
+                return `Halv ${nextHour}`;
+            } else if (minutes === 45) {
+                return `Kvart i ${nextHour}`;
+            } else if (minutes === 25) {
+                return `Fem i halv ${nextHour}`;
+            } else if (minutes === 35) {
+                return `Fem över halv ${nextHour}`;
+            } else if (minutes > 0 && minutes < 25) {
+                return `${minuteNames[minutes]} minut${minutes === 1 ? '' : 'er'} över ${currentHour}`;
+            } else if (minutes > 25 && minutes < 30) {
+                const minsToHalf = 30 - minutes;
+                return `${minuteNames[minsToHalf]} minut${minsToHalf === 1 ? '' : 'er'} i halv ${nextHour}`;
+            } else if (minutes > 30 && minutes < 35) {
+                const minsFromHalf = minutes - 30;
+                return `${minuteNames[minsFromHalf]} minut${minsFromHalf === 1 ? '' : 'er'} över halv ${nextHour}`;
+            } else if (minutes > 35 && minutes < 60) {
+                const minsTo = 60 - minutes;
+                return `${minuteNames[minsTo]} minut${minsTo === 1 ? '' : 'er'} i ${nextHour}`;
+            }
+
+            return `${currentHour} ${minutes}`;
+        }
+
+        function updateManualClock() {
+            let displayHours = manualHours;
+            let displayMinutes = manualMinutes;
+            
+            if (roundToFive) {
+                displayMinutes = Math.round(manualMinutes / 5) * 5;
+                if (displayMinutes === 60) {
+                    displayMinutes = 0;
+                }
+            }
+            
+            // Digital tid
+            const digitalHours = String(manualHours).padStart(2, '0');
+            const digitalMinutes = String(manualMinutes).padStart(2, '0');
+            document.getElementById('digitalTime').textContent = 
+                `${digitalHours}:${digitalMinutes}`;
+            
+            // Analog klocka
+            const hourAngle = (displayHours * 30) + (displayMinutes * 0.5);
+            const minuteAngle = (displayMinutes * 6);
+            
+            document.getElementById('hourHand').style.transform = 
+                `rotate(${hourAngle}deg)`;
+            document.getElementById('minuteHand').style.transform = 
+                `rotate(${minuteAngle}deg)`;
+            
+            // Tid i ord
+            document.getElementById('textTime').textContent = 
+                getTimeInWords(manualHours, displayMinutes);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+
+            // Visa bara 12-timmarsformat på analog klocka
+            const displayHours = hours % 12;
+            
+            let displayMinutes = minutes;
+            if (roundToFive) {
+                displayMinutes = Math.round(minutes / 5) * 5;
+                if (displayMinutes === 60) {
+                    displayMinutes = 0;
+                }
+            }
+
+            // Digital tid (alltid exakt)
+            const digitalHours = String(hours).padStart(2, '0');
+            const digitalMinutes = String(minutes).padStart(2, '0');
+            document.getElementById('digitalTime').textContent = 
+                `${digitalHours}:${digitalMinutes}`;
+
+            // Analog klocka
+            const hourAngle = (displayHours * 30) + (displayMinutes * 0.5);
+            const minuteAngle = (displayMinutes * 6);
+
+            document.getElementById('hourHand').style.transform = 
+                `rotate(${hourAngle}deg)`;
+            document.getElementById('minuteHand').style.transform = 
+                `rotate(${minuteAngle}deg)`;
+
+            // Tid i ord
+            document.getElementById('textTime').textContent = 
+                getTimeInWords(hours, displayMinutes);
+        }
+
+        // Uppdatera klockan varje sekund
+        setInterval(function() {
+            if (!manualMode) {
+                updateClock();
+            }
+        }, 1000);
+        
+        updateClock();
+    </script>
+</body>
+</html>
